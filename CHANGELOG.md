@@ -1,6 +1,19 @@
 # CHANGELOG — EOXRPG Client
 
-## 2026-06-16 — M0+M1 Foundation (Offline-First)
+## 2026-06-16 — Tap-to-Aim + Viewport Fix
+
+### Added
+- **Tap-to-aim system** — tap skill button to select, tap map to fire
+- Range circle indicator (red semi-transparent) around player when skill selected
+- Gold border highlight on selected skill button
+- Precision fix using `camera.viewfinder.position`
+
+### Fixed
+- **Viewport button repositioning** — buttons now use `dx`/`dy` offsets + `onGameResize`, survive cold start orientation switch
+- **Duplicate AppLogger registration** in GetIt
+- **Kotlin incremental cache corruption** (`gradle.properties`)
+
+## 2026-06-15 — M0+M1 Foundation (Offline-First)
 
 ### Added
 - `lib/core/` — config, env, error, logger, DI (GetIt)

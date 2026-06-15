@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
 
@@ -11,6 +12,7 @@ import '../engine/combat/models.dart';
 import '../engine/core/seeded_rng.dart';
 import '../engine/core/vec2.dart';
 import '../engine/combat/reference_combat_engine.dart';
+import '../engine/entity/entity_state.dart';
 import '../engine/world/aabb.dart';
 import '../engine/world/nav_grid.dart';
 import 'components/combat_entity_component.dart';
@@ -18,12 +20,9 @@ import 'components/damage_text_component.dart';
 import 'components/monster_component.dart';
 import 'components/overhead_opacity_component.dart';
 import 'components/player_component.dart';
-import '../engine/entity/entity_state.dart';
 import 'game_orchestrator.dart';
 import 'hud/hud_components.dart';
 import 'map/map_loader.dart';
-import 'skills/skill_aim_controller.dart';
-import 'skills/aim_indicator.dart';
 
 class EoxGame extends FlameGame with HasCollisionDetection {
   static const kOverheadPriority = 100000;
@@ -34,16 +33,11 @@ class EoxGame extends FlameGame with HasCollisionDetection {
 
   EoxGame({CombatEngineApi? engine, this.mapName = 'dev_arena.tmx'})
       : orchestrator = GameOrchestrator(
-          // ⚠️ ReferenceCombatEngine = PLACEHOLDER formulas. Swap this line
-          // for the adapter over the real CombatEngine v2 (see
-          // combat_engine_api.dart and INTEGRATION.md).
           engine ?? ReferenceCombatEngine(SeededRng(42)),
         );
 
   final GameOrchestrator orchestrator;
   final String mapName;
-  final SkillAimController aimController = SkillAimController();
-  AimIndicatorManager? _aimIndicatorManager;
 
   late LoadedMap map;
   late NavGrid navGrid;
@@ -53,8 +47,12 @@ class EoxGame extends FlameGame with HasCollisionDetection {
   final List<CombatEntityComponent> entityComponents = [];
   final Map<String, CombatEntityComponent> _byId = {};
   StreamSubscription<CombatEvent>? _combatSub;
+  final List<SkillButton> _hudButtons = [];
 
-  // ── Lifecycle ───────────────────────────────────────────────────────
+  SkillDef? selectedSkill;
+  String? selectedSkillId;
+  _RangeCircle? _rangeCircle;
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -83,7 +81,6 @@ class EoxGame extends FlameGame with HasCollisionDetection {
       if (monsterId != null) {
         world.add(MonsterComponent(monsterId: monsterId, position: s.position));
       }
-      // npcId spawns: Phase 4+ scope — intentionally not handled here.
     }
 
     camera.follow(p, maxSpeed: 600, snap: true);
@@ -93,11 +90,37 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     );
 
     _buildHud(p);
-
-    _aimIndicatorManager = AimIndicatorManager(aimController);
-    world.add(_aimIndicatorManager!);
-
+    _addViewportTapHandler();
     _combatSub = orchestrator.combatStream.listen(_onCombatEvent);
+  }
+
+  void _addViewportTapHandler() {
+    camera.viewport.add(_ViewportTapHandler());
+  }
+
+  void selectSkill(SkillDef skill, String skillId) {
+    selectedSkill = skill;
+    selectedSkillId = skillId;
+  }
+
+  void fireSelectedSkill(Vector2 worldTarget) {
+    final p = player;
+    if (p == null || selectedSkill == null) return;
+
+    switch (selectedSkill!.shape) {
+      case SkillShape.melee:
+        final dir = (worldTarget - p.center).normalized();
+        p.basicAttackTo(dir);
+      case SkillShape.projectile:
+        final dir = (worldTarget - p.center).normalized();
+        p.castProjectileTo(dir);
+      case SkillShape.aoe:
+        p.castNova();
+    }
+
+    _clearSelection();
+    selectedSkill = null;
+    selectedSkillId = null;
   }
 
   void _buildHud(PlayerComponent p) {
@@ -105,45 +128,89 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     p.joystick = joystick;
     camera.viewport.add(joystick);
 
-    Vector2 corner(double dx, double dy) =>
-        Vector2(size.x - dx, size.y - dy);
+    _hudButtons.clear();
 
-    camera.viewport.addAll([
-      SkillButton(
-        label: 'ATK',
-        skill: ReferenceSkills.basicSlash,
-        skillId: ReferenceSkills.basicSlash.id,
-        position: corner(60, 60),
-        radius: 34,
-        cooldownSkillId: ReferenceSkills.basicSlash.id,
-        cooldownTotal: ReferenceSkills.basicSlash.cooldownSeconds,
-      ),
-      SkillButton(
-        label: 'FIRE',
-        skill: ReferenceSkills.fireball,
-        skillId: ReferenceSkills.fireball.id,
-        position: corner(140, 50),
-        cooldownSkillId: ReferenceSkills.fireball.id,
-        cooldownTotal: ReferenceSkills.fireball.cooldownSeconds,
-      ),
-      SkillButton(
-        label: 'NOVA',
-        skill: ReferenceSkills.nova,
-        skillId: ReferenceSkills.nova.id,
-        position: corner(110, 120),
-        cooldownSkillId: ReferenceSkills.nova.id,
-        cooldownTotal: ReferenceSkills.nova.cooldownSeconds,
-      ),
-      SkillButton(
-        label: 'DODGE',
-        skill: ReferenceSkills.basicSlash,
-        skillId: 'sys_dodge',
-        position: corner(50, 140),
-        cooldownSkillId: 'sys_dodge',
-        cooldownTotal: PlayerComponent.dodgeCooldown,
-        onTap: () => player?.dodge(),
-      ),
-    ]);
+    _hudButtons.add(SkillButton(
+      label: 'ATK', dx: 60, dy: 60, radius: 34,
+      cooldownSkillId: ReferenceSkills.basicSlash.id,
+      cooldownTotal: ReferenceSkills.basicSlash.cooldownSeconds,
+      onPressed: () => _tapSkill(ReferenceSkills.basicSlash),
+    ));
+    _hudButtons.add(SkillButton(
+      label: 'FIRE', dx: 140, dy: 50,
+      cooldownSkillId: ReferenceSkills.fireball.id,
+      cooldownTotal: ReferenceSkills.fireball.cooldownSeconds,
+      onPressed: () => _tapSkill(ReferenceSkills.fireball),
+    ));
+    _hudButtons.add(SkillButton(
+      label: 'NOVA', dx: 110, dy: 120,
+      cooldownSkillId: ReferenceSkills.nova.id,
+      cooldownTotal: ReferenceSkills.nova.cooldownSeconds,
+      onPressed: () => _tapSkill(ReferenceSkills.nova),
+    ));
+    _hudButtons.add(SkillButton(
+      label: 'DODGE', dx: 50, dy: 140,
+      cooldownSkillId: 'sys_dodge',
+      cooldownTotal: PlayerComponent.dodgeCooldown,
+      onPressed: () {
+        _clearSelection();
+        selectedSkill = null;
+        player?.dodge();
+      },
+    ));
+
+    camera.viewport.addAll(_hudButtons);
+    _repositionHud();
+  }
+
+  void _tapSkill(SkillDef skill) {
+    if (selectedSkill?.id == skill.id) {
+      _clearSelection();
+      final p = player;
+      if (p != null) {
+        switch (skill.shape) {
+          case SkillShape.melee: p.basicAttack();
+          case SkillShape.projectile: p.castFireball();
+          case SkillShape.aoe: p.castNova();
+        }
+      }
+      return;
+    }
+    _clearSelection();
+    selectSkill(skill, skill.id);
+    for (final btn in _hudButtons) {
+      if (btn.cooldownSkillId == skill.id) {
+        btn.isSelected = true;
+      }
+    }
+    _showRangeCircle(skill.range > 0 ? skill.range : skill.aoeRadius > 0 ? skill.aoeRadius : 320);
+  }
+
+  void _showRangeCircle(double radius) {
+    _rangeCircle?.removeFromParent();
+    _rangeCircle = _RangeCircle(radius: radius);
+    world.add(_rangeCircle!);
+  }
+
+  void _clearSelection() {
+    for (final btn in _hudButtons) {
+      btn.isSelected = false;
+    }
+    _rangeCircle?.removeFromParent();
+    _rangeCircle = null;
+  }
+
+  void _repositionHud() {
+    if (size.x <= 0 || size.y <= 0) return;
+    for (final btn in _hudButtons) {
+      btn.position = Vector2(size.x - btn.dx, size.y - btn.dy);
+    }
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _repositionHud();
   }
 
   @override
@@ -151,15 +218,7 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     super.update(dt);
     orchestrator.tick(dt);
 
-    if (aimController.state == SkillAimState.aiming) {
-      final p = player;
-      if (p != null) {
-        p.aiming = true;
-        p.updateFacingFromVector(aimController.aimDirection);
-      }
-    } else {
-      player?.aiming = false;
-    }
+    _rangeCircle?.follow(player?.center ?? Vector2.zero());
 
     final p = player;
     final wrap = _overheadWrap;
@@ -178,22 +237,18 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     super.onRemove();
   }
 
-  // ── Domain event routing ────────────────────────────────────────────
   void _onCombatEvent(CombatEvent e) {
     if (e is DotDamageEvent) {
       final target = _byId[e.targetId];
       if (target == null) return;
-      world.add(
-          DamageTextComponent.dot(e.damage, target.center - Vector2(0, 30)));
+      world.add(DamageTextComponent.dot(e.damage, target.center - Vector2(0, 30)));
       if (e.killed) {
         target.changeState(EntityState.die);
         target.onDeath();
       }
     }
-    // DeathEvent from direct hits is already visualised via onDamaged.
   }
 
-  // ── World queries / helpers ─────────────────────────────────────────
   void registerEntityComponent(CombatEntityComponent c) {
     entityComponents.add(c);
     _byId[c.entityId] = c;
@@ -206,30 +261,19 @@ class EoxGame extends FlameGame with HasCollisionDetection {
 
   bool isPointBlocked(double x, double y) {
     for (final s in map.collisions) {
-      if (x >= s.left && x <= s.right && y >= s.top && y <= s.bottom) {
-        return true;
-      }
+      if (x >= s.left && x <= s.right && y >= s.top && y <= s.bottom) return true;
     }
     return false;
   }
 
-  /// AABB-resolved movement for an entity's FEET box (D2: push-out +
-  /// wall-slide, pure function in engine/world/aabb.dart). Returns the new
-  /// component top-left position.
   Vector2 moveWithCollision(CombatEntityComponent e, Vector2 delta) {
     final off = e.collOffset;
-    final feet = Aabb(
-      e.position.x + off.x,
-      e.position.y + off.y,
-      CombatEntityComponent.collW,
-      CombatEntityComponent.collH,
-    );
-    final resolved =
-        resolveAabbMovement(feet, Vec2(delta.x, delta.y), map.collisions);
+    final feet = Aabb(e.position.x + off.x, e.position.y + off.y,
+        CombatEntityComponent.collW, CombatEntityComponent.collH);
+    final resolved = resolveAabbMovement(feet, Vec2(delta.x, delta.y), map.collisions);
     return Vector2(resolved.x - off.x, resolved.y - off.y);
   }
 
-  /// A* in world coordinates — MONSTERS ONLY (D2).
   List<Vector2> findPathWorld(Vector2 from, Vector2 to) {
     final start = navGrid.worldToCell(from.x, from.y);
     final goal = navGrid.worldToCell(to.x, to.y);
@@ -241,17 +285,13 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     }).toList();
   }
 
-  // ── Player death / respawn ──────────────────────────────────────────
-  void onPlayerDeath() {
-    overlays.add('death');
-  }
+  void onPlayerDeath() => overlays.add('death');
 
   void respawnPlayer() {
     overlays.remove('death');
     player?.respawn(map.playerSpawn.clone());
   }
 
-  // ── Monster respawn (testing-friendly loop) ─────────────────────────
   static const _monsterRespawnDelay = 8.0;
 
   void scheduleMonsterRespawn(String monsterId, Vector2 at) {
@@ -262,5 +302,70 @@ class EoxGame extends FlameGame with HasCollisionDetection {
         world.add(MonsterComponent(monsterId: monsterId, position: at.clone()));
       },
     ));
+  }
+}
+
+class _ViewportTapHandler extends PositionComponent
+    with TapCallbacks, HasGameReference<EoxGame> {
+  _ViewportTapHandler()
+      : super(size: Vector2.all(4000), position: Vector2.zero(), priority: -50000);
+
+  @override
+  void render(Canvas canvas) {}
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    final eox = game;
+    if (eox.selectedSkill == null) return;
+
+    final p = eox.player;
+    if (p == null) return;
+
+    final viewportPos = event.localPosition;
+    final camCenter = eox.camera.viewfinder.position;
+    final center = eox.size / 2;
+    final worldPos = viewportPos + camCenter - center;
+
+    final dist = worldPos.distanceTo(p.center);
+    final range = eox.selectedSkill!.range > 0 ? eox.selectedSkill!.range : 320.0;
+    if (dist > range) return;
+
+    eox.fireSelectedSkill(worldPos);
+  }
+}
+
+class _RangeCircle extends PositionComponent {
+  final double radius;
+
+  _RangeCircle({required this.radius})
+      : super(
+          size: Vector2.all(radius * 2),
+          anchor: Anchor.center,
+          priority: 30000,
+        );
+
+  void follow(Vector2 target) {
+    position.setFrom(target);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final r = size.x / 2;
+    canvas.drawCircle(
+      Offset(r, r),
+      r,
+      Paint()
+        ..color = const Color(0x22FF4444)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      Offset(r, r),
+      r,
+      Paint()
+        ..color = const Color(0x88FF4444)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
   }
 }
