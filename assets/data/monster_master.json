@@ -1,0 +1,17 @@
+{
+  "monsters": [
+    {
+      "monster_id": "slime_test",
+      "name_key": "mon.slime_test",
+      "level": 1,
+      "stats": { "hp": 240, "mp": 60, "atk": 20, "def": 5, "spd": 6, "critChance": 0.05, "dodgeChance": 0.02, "moveSpeed": 60 },
+      "skills": ["skl_slime_bite"],
+      "element": "physical",
+      "behavior": "aggressive",
+      "encounter": { "party_min": 1, "party_max": 3 },
+      "loot_table": [],
+      "exp": 10,
+      "currency_reward": { "code": "FACTION_LOCAL", "amount": 2 }
+    }
+  ]
+}

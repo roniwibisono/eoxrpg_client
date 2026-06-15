@@ -7,14 +7,12 @@ import '../../engine/entity/entity_state.dart';
 import 'combat_entity_component.dart';
 import 'hitbox_components.dart';
 
-/// Player: continuous joystick + per-frame AABB resolve (D2). Never A*.
 class PlayerComponent extends CombatEntityComponent {
   PlayerComponent({required super.position})
       : super(
           entityId: 'player',
           team: Team.player,
           sheetBasePath: 'characters/human',
-          // PLACEHOLDER stats — real values come from GameConfig/CDN (GDD §5)
           statsDef: const CombatantStats(
             maxHp: 120,
             maxMp: 60,
@@ -28,9 +26,10 @@ class PlayerComponent extends CombatEntityComponent {
         );
 
   JoystickComponent? joystick;
+  bool aiming = false;
 
-  static const _runThreshold = 0.85; // joystick intensity → run
-  static const dodgeCooldown = 1.2; // PLACEHOLDER
+  static const _runThreshold = 0.85;
+  static const dodgeCooldown = 1.2;
   static const _dodgeDuration = 0.25;
   static const _dodgeSpeed = 380.0;
   static const _dodgeSkillId = 'sys_dodge';
@@ -55,6 +54,8 @@ class PlayerComponent extends CombatEntityComponent {
       return;
     }
 
+    if (aiming) return;
+
     final j = joystick;
     if (j == null) return;
     final rel = j.relativeDelta;
@@ -69,8 +70,6 @@ class PlayerComponent extends CombatEntityComponent {
 
     final face = Direction8.fromVector(rel.x, rel.y, fallback: facing);
     if (fsm.isActing || fsm.state == EntityState.hit) {
-      // movement cannot cancel attack/cast (GDD §6.4) — but we keep the
-      // requested facing for the next action.
       return;
     }
 
@@ -85,10 +84,14 @@ class PlayerComponent extends CombatEntityComponent {
     position.setFrom(game.moveWithCollision(this, delta));
   }
 
-  // ── Actions (HUD buttons) ────────────────────────────────────────────
   void basicAttack() {
+    basicAttackTo(directionUnitVector(facing));
+  }
+
+  void basicAttackTo(Vector2 dir) {
     if (fsm.isDead || isDodging) return;
     final skill = ReferenceSkills.basicSlash;
+    updateFacingFromVector(dir);
     if (!changeState(EntityState.basicAttack)) return;
     final castId = game.orchestrator.beginCast(entityId, skill);
     if (castId == null) {
@@ -96,7 +99,6 @@ class PlayerComponent extends CombatEntityComponent {
       changeState(EntityState.idle);
       return;
     }
-    // Damage on IMPACT FRAME (GDD §6.2), not on press.
     onImpactFrame = () {
       onImpactFrame = null;
       game.world.add(ArcHitboxComponent(
@@ -110,14 +112,17 @@ class PlayerComponent extends CombatEntityComponent {
     };
   }
 
-  void castFireball() => _castReleaseSkill(ReferenceSkills.fireball);
+  void castFireball() {
+    castProjectileTo(directionUnitVector(facing));
+  }
 
-  void _castReleaseSkill(SkillDef skill) {
+  void castProjectileTo(Vector2 dir) {
+    final skill = ReferenceSkills.fireball;
     if (fsm.isDead || isDodging) return;
-    // Check BEFORE locking the animation so a failed cast doesn't freeze us.
     if (!game.orchestrator.cooldownsOf(entityId).isReady(skill.id)) return;
     final e = game.orchestrator.entity(entityId);
     if (e == null || e.mp < skill.mpCost) return;
+    updateFacingFromVector(dir);
     if (!changeState(EntityState.castSkill)) return;
     final castId = game.orchestrator.beginCast(entityId, skill);
     if (castId == null) {
@@ -133,17 +138,24 @@ class PlayerComponent extends CombatEntityComponent {
         casterTeam: team,
         skill: skill,
         origin: center,
-        directionUnit: directionUnitVector(facing),
+        directionUnit: dir.normalized(),
       ));
     };
   }
 
   void castNova() {
+    castAoeAt(center);
+  }
+
+  void castAoeAt(Vector2 targetPos) {
     final skill = ReferenceSkills.nova;
     if (fsm.isDead || isDodging) return;
     if (!game.orchestrator.cooldownsOf(entityId).isReady(skill.id)) return;
     final e = game.orchestrator.entity(entityId);
     if (e == null || e.mp < skill.mpCost) return;
+    if (targetPos != center) {
+      updateFacingFromVector((targetPos - center).normalized());
+    }
     if (!changeState(EntityState.castSkill)) return;
     final castId = game.orchestrator.beginCast(entityId, skill);
     if (castId == null) {
@@ -151,14 +163,12 @@ class PlayerComponent extends CombatEntityComponent {
       changeState(EntityState.idle);
       return;
     }
-    // AoE spawns at CAST START; its own active window models "hitbox aktif
-    // frame 3–5" of the cast animation (Combat v2 §5.1).
     game.world.add(AoeExplosionComponent(
       castId: castId,
       casterId: entityId,
       casterTeam: team,
       skill: skill,
-      centerPos: center,
+      centerPos: targetPos,
     ));
   }
 
@@ -168,13 +178,17 @@ class PlayerComponent extends CombatEntityComponent {
     if (!cd.isReady(_dodgeSkillId)) return;
     cd.trigger(_dodgeSkillId, dodgeCooldown);
     _dodgeTimer = _dodgeDuration;
-    runtime.invulnerable = true; // Combat v2 dodge i-frames
+    runtime.invulnerable = true;
     final j = joystick;
     final rel = j == null ? Vector2.zero() : j.relativeDelta;
     _dodgeDir = rel.length > 0.05
         ? rel.normalized()
         : directionUnitVector(facing);
     changeState(EntityState.run);
+  }
+
+  void updateFacingFromVector(Vector2 dir) {
+    facing = Direction8.fromVector(dir.x, dir.y, fallback: facing);
   }
 
   @override
@@ -184,8 +198,6 @@ class PlayerComponent extends CombatEntityComponent {
     game.onPlayerDeath();
   }
 
-  /// Respawn = fresh runtime + fresh FSM (die-lock is permanent by design,
-  /// so respawning replaces the machine instead of bypassing the rule).
   void respawn(Vector2 at) {
     game.orchestrator.unregister(entityId);
     runtime = game.orchestrator.register(entityId, statsDef);

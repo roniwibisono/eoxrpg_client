@@ -1,0 +1,11 @@
+{
+  "factions": [
+    { "id": "nexus_custodian", "name_key": "faction.nexus", "color_hex": "#FFD700", "currency": { "code": "CRD", "name_key": "currency.crd", "icon_ref": "crd" }, "neutral": true },
+    { "id": "concordium", "name_key": "faction.concordium", "color_hex": "#4488FF", "currency": { "code": "CM", "name_key": "currency.cm", "icon_ref": "cm" } },
+    { "id": "omnicorp", "name_key": "faction.omnicorp", "color_hex": "#FF4444", "currency": { "code": "OC", "name_key": "currency.oc", "icon_ref": "oc" } },
+    { "id": "iron_covenant", "name_key": "faction.iron_covenant", "color_hex": "#888888", "currency": { "code": "IC", "name_key": "currency.ic", "icon_ref": "ic" } },
+    { "id": "verdant_circle", "name_key": "faction.verdant_circle", "color_hex": "#44BB44", "currency": { "code": "VC", "name_key": "currency.vc", "icon_ref": "vc" } },
+    { "id": "arcanum_order", "name_key": "faction.arcanum_order", "color_hex": "#BB44BB", "currency": { "code": "AO", "name_key": "currency.ao", "icon_ref": "ao" } },
+    { "id": "crimson_guild", "name_key": "faction.crimson_guild", "color_hex": "#BB4444", "currency": { "code": "CG", "name_key": "currency.cg", "icon_ref": "cg" } }
+  ]
+}

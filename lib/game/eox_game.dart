@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/experimental.dart';
@@ -21,13 +22,15 @@ import '../engine/entity/entity_state.dart';
 import 'game_orchestrator.dart';
 import 'hud/hud_components.dart';
 import 'map/map_loader.dart';
+import 'skills/skill_aim_controller.dart';
+import 'skills/aim_indicator.dart';
 
 class EoxGame extends FlameGame with HasCollisionDetection {
-  /// Render priority of the Overhead layer; entities y-sort below it.
   static const kOverheadPriority = 100000;
-
-  /// NavGrid cell size — half a tile for tighter monster paths.
   static const _navCell = 16.0;
+
+  @override
+  Color backgroundColor() => const Color(0xFF1A1A2E);
 
   EoxGame({CombatEngineApi? engine, this.mapName = 'dev_arena.tmx'})
       : orchestrator = GameOrchestrator(
@@ -39,6 +42,8 @@ class EoxGame extends FlameGame with HasCollisionDetection {
 
   final GameOrchestrator orchestrator;
   final String mapName;
+  final SkillAimController aimController = SkillAimController();
+  AimIndicatorManager? _aimIndicatorManager;
 
   late LoadedMap map;
   late NavGrid navGrid;
@@ -88,6 +93,10 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     );
 
     _buildHud(p);
+
+    _aimIndicatorManager = AimIndicatorManager(aimController);
+    world.add(_aimIndicatorManager!);
+
     _combatSub = orchestrator.combatStream.listen(_onCombatEvent);
   }
 
@@ -102,32 +111,37 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     camera.viewport.addAll([
       SkillButton(
         label: 'ATK',
+        skill: ReferenceSkills.basicSlash,
+        skillId: ReferenceSkills.basicSlash.id,
         position: corner(60, 60),
         radius: 34,
         cooldownSkillId: ReferenceSkills.basicSlash.id,
         cooldownTotal: ReferenceSkills.basicSlash.cooldownSeconds,
-        onPressed: () => player?.basicAttack(),
       ),
       SkillButton(
         label: 'FIRE',
+        skill: ReferenceSkills.fireball,
+        skillId: ReferenceSkills.fireball.id,
         position: corner(140, 50),
         cooldownSkillId: ReferenceSkills.fireball.id,
         cooldownTotal: ReferenceSkills.fireball.cooldownSeconds,
-        onPressed: () => player?.castFireball(),
       ),
       SkillButton(
         label: 'NOVA',
+        skill: ReferenceSkills.nova,
+        skillId: ReferenceSkills.nova.id,
         position: corner(110, 120),
         cooldownSkillId: ReferenceSkills.nova.id,
         cooldownTotal: ReferenceSkills.nova.cooldownSeconds,
-        onPressed: () => player?.castNova(),
       ),
       SkillButton(
         label: 'DODGE',
+        skill: ReferenceSkills.basicSlash,
+        skillId: 'sys_dodge',
         position: corner(50, 140),
         cooldownSkillId: 'sys_dodge',
         cooldownTotal: PlayerComponent.dodgeCooldown,
-        onPressed: () => player?.dodge(),
+        onTap: () => player?.dodge(),
       ),
     ]);
   }
@@ -137,7 +151,16 @@ class EoxGame extends FlameGame with HasCollisionDetection {
     super.update(dt);
     orchestrator.tick(dt);
 
-    // Canopy transparency (GDD §7 Overhead).
+    if (aimController.state == SkillAimState.aiming) {
+      final p = player;
+      if (p != null) {
+        p.aiming = true;
+        p.updateFacingFromVector(aimController.aimDirection);
+      }
+    } else {
+      player?.aiming = false;
+    }
+
     final p = player;
     final wrap = _overheadWrap;
     if (p != null && wrap != null) {

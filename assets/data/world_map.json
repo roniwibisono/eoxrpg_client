@@ -1,0 +1,34 @@
+{
+  "regions": [
+    {
+      "region_id": "nexus_city",
+      "name_key": "region.nexus_city",
+      "faction_owner": "nexus_custodian",
+      "biome": "urban",
+      "tmx": "nexus_city.tmx",
+      "zones": [
+        {
+          "zone_id": "z_nexus_center",
+          "nodes": [
+            { "id": "n_nexus_capital", "tier": "capital", "position": { "x": 10, "y": 10 }, "income": 0, "adjacency": [] }
+          ]
+        }
+      ]
+    },
+    {
+      "region_id": "concordium_capital",
+      "name_key": "region.concordium_capital",
+      "faction_owner": "concordium",
+      "biome": "urban",
+      "tmx": "concordium_capital.tmx",
+      "zones": [
+        {
+          "zone_id": "z_conc_center",
+          "nodes": [
+            { "id": "n_conc_capital", "tier": "capital", "position": { "x": 20, "y": 20 }, "income": 0, "adjacency": [] }
+          ]
+        }
+      ]
+    }
+  ]
+}

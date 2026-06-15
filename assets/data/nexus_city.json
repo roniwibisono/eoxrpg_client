@@ -1,0 +1,15 @@
+{
+  "npcs": [
+    { "npc_id": "npc_nexus_merchant", "name": "Lysander Goods", "type": "merchant", "dialogue_key": "dlg.nexus.merchant", "inventory_ref": "merchant_basic", "quest_ids": [], "position": { "x": 600, "y": 400 }, "lore_tags": [], "sprite_ref": "npcs/merchant" },
+    { "npc_id": "npc_nexus_blacksmith", "name": "Orin Forgehand", "type": "blacksmith", "dialogue_key": "dlg.nexus.blacksmith", "inventory_ref": null, "quest_ids": [], "position": { "x": 800, "y": 400 }, "lore_tags": [], "sprite_ref": "npcs/blacksmith" },
+    { "npc_id": "npc_nexus_innkeeper", "name": "Mira Hearth", "type": "innkeeper", "dialogue_key": "dlg.nexus.innkeeper", "inventory_ref": null, "quest_ids": [], "position": { "x": 400, "y": 300 }, "lore_tags": [], "sprite_ref": "npcs/innkeeper" },
+    { "npc_id": "npc_nexus_banker", "name": "Gideon Vault", "type": "ama_banker", "dialogue_key": "dlg.nexus.banker", "inventory_ref": null, "quest_ids": [], "position": { "x": 500, "y": 500 }, "lore_tags": [], "sprite_ref": "npcs/banker" },
+    { "npc_id": "npc_nexus_quest_giver", "name": "Aria Quill", "type": "quest_giver", "dialogue_key": "dlg.nexus.quest_giver", "inventory_ref": null, "quest_ids": ["q_nexus_starmap_01"], "position": { "x": 300, "y": 500 }, "lore_tags": [], "sprite_ref": "npcs/quest_giver" },
+    { "npc_id": "npc_nexus_lore", "name": "Cartographer Yune", "type": "lore_keeper", "dialogue_key": "dlg.nexus.yune", "inventory_ref": null, "quest_ids": [], "position": { "x": 700, "y": 300 }, "lore_tags": ["remnants", "starmaps"], "sprite_ref": "npcs/yune" },
+    { "npc_id": "npc_nexus_custodian", "name": "Envoy Seraph", "type": "custodian_envoy", "dialogue_key": "dlg.nexus.custodian", "inventory_ref": null, "quest_ids": [], "position": { "x": 500, "y": 200 }, "lore_tags": [], "sprite_ref": "npcs/custodian" },
+    { "npc_id": "npc_nexus_blackmarket", "name": "Shade", "type": "black_market", "dialogue_key": "dlg.nexus.blackmarket", "inventory_ref": "blackmarket_weekly", "quest_ids": [], "position": { "x": 900, "y": 600 }, "lore_tags": [], "sprite_ref": "npcs/shade" },
+    { "npc_id": "npc_nexus_relations", "name": "Mira Tal", "type": "faction_relations", "dialogue_key": "dlg.nexus.relations", "inventory_ref": null, "quest_ids": [], "position": { "x": 200, "y": 400 }, "lore_tags": [], "sprite_ref": "npcs/relations" },
+    { "npc_id": "npc_nexus_medic", "name": "Hippok Orin", "type": "medic", "dialogue_key": "dlg.nexus.medic", "inventory_ref": null, "quest_ids": [], "position": { "x": 600, "y": 700 }, "lore_tags": [], "sprite_ref": "npcs/medic" }
+  ],
+  "pvp_enabled": false
+}

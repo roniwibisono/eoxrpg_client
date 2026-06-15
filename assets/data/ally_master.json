@@ -1,0 +1,7 @@
+{
+  "allies": [
+    { "id": "ally_guardian_r", "name_key": "ally.guardian_r", "rarity": "R", "faction_affinity": null, "stats": { "hp": 300, "mp": 30, "atk": 18, "def": 12, "spd": 10 }, "skills": ["skl_basic_slash"], "sprite_ref": "allies/guardian_r", "behavior_profile": "balanced" },
+    { "id": "ally_healer_sr", "name_key": "ally.healer_sr", "rarity": "SR", "faction_affinity": null, "stats": { "hp": 250, "mp": 80, "atk": 12, "def": 8, "spd": 14 }, "skills": ["skl_basic_slash"], "sprite_ref": "allies/healer_sr", "behavior_profile": "healer" },
+    { "id": "ally_berserker_ssr", "name_key": "ally.berserker_ssr", "rarity": "SSR", "faction_affinity": null, "stats": { "hp": 500, "mp": 40, "atk": 28, "def": 15, "spd": 18 }, "skills": ["skl_basic_slash", "skl_fireball"], "sprite_ref": "allies/berserker_ssr", "behavior_profile": "aggressive" }
+  ]
+}

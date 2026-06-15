@@ -1,0 +1,9 @@
+{
+  "classes": [
+    { "id": "novice", "name_key": "class.novice", "tier": 0, "promotionLevels": [30, 60], "children": ["swordsman", "mage", "archer", "acolyte"], "statsPerLevel": { "hp": 12, "mp": 4, "atk": 2, "def": 1, "spd": 2 } },
+    { "id": "swordsman", "name_key": "class.swordsman", "tier": 1, "promotionLevels": [60], "children": ["knight", "crusader"], "statsPerLevel": { "hp": 18, "mp": 2, "atk": 4, "def": 3, "spd": 2 } },
+    { "id": "mage", "name_key": "class.mage", "tier": 1, "promotionLevels": [60], "children": ["wizard", "sage"], "statsPerLevel": { "hp": 8, "mp": 10, "atk": 5, "def": 1, "spd": 2 } },
+    { "id": "archer", "name_key": "class.archer", "tier": 1, "promotionLevels": [60], "children": ["hunter", "sniper"], "statsPerLevel": { "hp": 12, "mp": 4, "atk": 3, "def": 2, "spd": 4 } },
+    { "id": "acolyte", "name_key": "class.acolyte", "tier": 1, "promotionLevels": [60], "children": ["priest", "monk"], "statsPerLevel": { "hp": 10, "mp": 8, "atk": 2, "def": 2, "spd": 2 } }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "elements": [
+    { "id": "physical", "name_key": "elem.physical" },
+    { "id": "fire", "name_key": "elem.fire", "strongAgainst": ["ice", "nature"], "weakAgainst": ["water"] },
+    { "id": "water", "name_key": "elem.water", "strongAgainst": ["fire"], "weakAgainst": ["lightning", "nature"] },
+    { "id": "ice", "name_key": "elem.ice", "strongAgainst": ["nature", "dragon"], "weakAgainst": ["fire"] },
+    { "id": "lightning", "name_key": "elem.lightning", "strongAgainst": ["water"], "weakAgainst": ["earth"] },
+    { "id": "earth", "name_key": "elem.earth", "strongAgainst": ["lightning"], "weakAgainst": ["fire", "ice"] },
+    { "id": "nature", "name_key": "elem.nature", "strongAgainst": ["water", "earth"], "weakAgainst": ["fire", "ice"] },
+    { "id": "dragon", "name_key": "elem.dragon", "strongAgainst": ["physical"], "weakAgainst": ["ice"] },
+    { "id": "void", "name_key": "elem.void", "strongAgainst": ["physical"], "weakAgainst": ["physical"] }
+  ]
+}

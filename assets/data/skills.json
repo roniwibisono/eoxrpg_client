@@ -1,0 +1,8 @@
+{
+  "skills": [
+    { "id": "skl_basic_slash", "name_key": "skl.basic_slash", "class_ids": [], "monster": false, "mult": 1.0, "mp_cost": 0, "target": "single", "element": "physical", "cooldown_turns": 0, "is_basic_attack": true },
+    { "id": "skl_fireball", "name_key": "skl.fireball", "class_ids": [], "monster": false, "mult": 1.8, "mp_cost": 8, "target": "single", "element": "fire", "cooldown_turns": 2, "status_on_hit": "burn" },
+    { "id": "skl_nova", "name_key": "skl.nova", "class_ids": [], "monster": false, "mult": 1.2, "mp_cost": 14, "target": "aoe", "element": "fire", "cooldown_turns": 5 },
+    { "id": "skl_slime_bite", "name_key": "skl.slime_bite", "class_ids": [], "monster": true, "mult": 0.8, "mp_cost": 0, "target": "single", "element": "physical", "cooldown_turns": 1, "is_basic_attack": true }
+  ]
+}

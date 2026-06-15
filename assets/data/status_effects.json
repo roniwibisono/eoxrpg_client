@@ -1,0 +1,9 @@
+{
+  "status_effects": [
+    { "id": "burn", "name_key": "status.burn", "statMods": {}, "dotPerTurn": 3, "blocksSkills": false, "absorb": false, "durationTurns": 3, "scope": "single" },
+    { "id": "freeze", "name_key": "status.freeze", "statMods": { "spd": -10 }, "dotPerTurn": 0, "blocksSkills": true, "absorb": false, "durationTurns": 2, "scope": "single" },
+    { "id": "poison", "name_key": "status.poison", "statMods": {}, "dotPerTurn": 2, "blocksSkills": false, "absorb": false, "durationTurns": 5, "scope": "single" },
+    { "id": "shielded", "name_key": "status.shielded", "statMods": {}, "dotPerTurn": 0, "blocksSkills": false, "absorb": true, "durationTurns": 2, "scope": "single" },
+    { "id": "synchronized", "name_key": "status.synchronized", "statMods": { "atk": 5 }, "dotPerTurn": 0, "blocksSkills": false, "absorb": false, "durationTurns": 3, "scope": "partyWide" }
+  ]
+}

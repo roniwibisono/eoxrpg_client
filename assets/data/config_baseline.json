@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "combat": {
+    "initiative": { "dice": 10, "reRollPerRound": true },
+    "defend": { "defMultiplier": 1.5, "endsOnNextTurn": true },
+    "flee": { "baseChance": 0.4, "speedWeight": 0.02, "minChance": 0.1, "maxChance": 0.9 },
+    "damage": { "defReductionRatio": 0.4, "minDamage": 1 },
+    "gacha": { "ssr": 0.015, "sr": 0.12, "r": 0.865, "pityThreshold": 80 },
+    "allyHealThreshold": 0.45
+  },
+  "economy": {
+    "exchange": { "feePercent": 1.0, "rateClampMin": 0.25, "rateClampMax": 4.0, "tickHours": 6 },
+    "siege": { "cooldownMinutes": 120 },
+    "aiFiller": {
+      "tickMinutes": 5,
+      "winRateCap": 0.40,
+      "influenceCapPerNodePerDay": 0.25,
+      "fadeOutMinutes": 10,
+      "yieldWindowSeconds": 60,
+      "winRateWarning": 0.35
+    },
+    "influenceTick": { "outer": 1, "tactical": 3, "core": 8 }
+  },
+  "sanction": { "rateFloor": 0.25 },
+  "gacha": { "ssr": 0.015, "sr": 0.12, "r": 0.865, "pityThreshold": 80 }
+}

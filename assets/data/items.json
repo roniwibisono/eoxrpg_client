@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "id": "it_health_potion", "name_key": "item.health_potion", "type": "consumable", "effect": "heal_hp", "value": 50, "price_base": 10, "sell_value": 3, "tier": 1 },
+    { "id": "it_mana_potion", "name_key": "item.mana_potion", "type": "consumable", "effect": "heal_mp", "value": 30, "price_base": 8, "sell_value": 2, "tier": 1 },
+    { "id": "it_antidote", "name_key": "item.antidote", "type": "consumable", "effect": "cure_poison", "value": 1, "price_base": 5, "sell_value": 1, "tier": 1 },
+    { "id": "it_void_shard", "name_key": "item.void_shard", "type": "material", "price_base": 25, "sell_value": 5, "tier": 2 },
+    { "id": "it_iron_sword", "name_key": "item.iron_sword", "type": "equip", "slot": "weapon", "statMods": { "atk": 8 }, "price_base": 100, "sell_value": 20, "tier": 2 },
+    { "id": "it_cloth_armor", "name_key": "item.cloth_armor", "type": "equip", "slot": "body", "statMods": { "def": 5, "hp": 20 }, "price_base": 80, "sell_value": 15, "tier": 2 }
+  ]
+}
